@@ -30,7 +30,7 @@ To address the contextual limitations and the failures of current methods, a new
 The system must be able to handle codebases of arbitrary size without saturating the LLM's context window with irrelevant data. The retrieval mechanism must be precise enough to fetch only the exact execution path required, decoupled from the total size of the repository.
 
 ## 3.2 Semantic and Structural Understanding
-The system must perform searches that respect the structural integrity of code. Unlike simple text matching (2.1) or fragmented RAG (2.3), the system needs to understand and traverse the "call stack" and data flow dependencies to retrieve context that is logically connected (e.g., finding all implementations of an interface).  
+The system must perform searches that respect the structural integrity of code. Unlike simple text matching or fragmented RAG, the system needs to understand and traverse the "call stack" and data flow dependencies to retrieve context that is logically connected (e.g., finding all implementations of an interface).  
 
 ## 3.3 Reduced Hallucination via Determinism
 The system must minimize the generation of incorrect code references. Instead of relying on the LLM to *guess* relationships from fragmented text, the system should rely on deterministic database lookups to validate dependencies before they are presented to the model.
@@ -48,53 +48,85 @@ The system will be evaluated on its ability to resolve a range of queries, from 
 ## 4.3 Response Time
 The system must provide a response to a query within a maximum of 10 minutes to ensure a fluid developer experience.
 
-# 5 Technical Background: GitHub CodeQL
 
-To address the limitations of vector-based search in large codebases, this solution leverages **GitHub CodeQL**. CodeQL is a semantic code analysis engine that treats code as data. Unlike standard text search which sees code as strings of characters, CodeQL extracts a **relational database** from the source code.
+# 5 Technical Background: Structural Analysis Tools
 
-This database contains tables representing:
-*   **Syntactic structures** (Abstract Syntax Tree nodes like functions, loops, variables).
-*   **Semantic relationships** (Data flow, control flow, inheritance).
+To address the limitations of vector search, this solution leverages **ast-grep** and **GitHub CodeQL**. Both rely on the Abstract Syntax Tree (AST) to treat code as data rather than plain text.
 
-This allows for high-precision queries (e.g., "Find all functions that call `user_auth` and write to the database") that are impossible with vector similarity search. By utilizing CodeQL, we gain deterministic accuracy in retrieving structural dependencies, solving the ambiguity issues common in RAG.
+## 5.1 The Abstract Syntax Tree (AST)
+The AST represents code as a hierarchical tree of syntactic nodes (e.g., `FunctionDeclaration`, `Identifier`) rather than a linear string of characters. This structure allows tools to distinguish actual logic from unrelated text.
+*   **Example:** An AST parser distinguishes the variable `user_id` inside a logic block from the text "user_id" inside a comment, preventing irrelevant matches.
 
-# 6 Proposed Solution: Hybrid CodeQL-Augmented LLM
+## 5.2 ast-grep: Structural Pattern Matching
+**ast-grep** is a high-performance search tool that matches patterns against the AST using "meta-variables" (wildcards) effectively acting as a structural regex. It is optimized for speed, enabling rapid scanning of massive repositories[4].
+*   **Example:** The pattern `try { $$$ } catch ($$$) { }` instantaneously locates all empty catch blocks across a project, ignoring formatting or internal content.
 
-We propose a **Hybrid Retrieval System** that combines the flexibility of natural language search with the structural rigidity of CodeQL. This addresses the technical gap where CodeQL requires exact naming conventions while users provide vague natural language intent.
+## 5.3 GitHub CodeQL: Relational Code Analysis
+**CodeQL** treats the codebase as a relational database[5]. During the build, it extracts the AST, Control Flow, and Data Flow into queryable tables. It excels at deep analysis, linking logically connected elements across files.
+*   **Example:** A CodeQL query can trace "Taint Tracking" paths to identify if an unsanitized HTTP request parameter flows into a specific SQL execution statement.
 
-## 6.1 Post-Training Strategy
-We employ a post-training strategy involving:
-1.  **Supervised Fine-Tuning (SFT):** Training the LLM on a corpus of CodeQL queries to teach it the complex syntax and logic of the QL language.
-2.  **Reinforcement Learning (RL):** Optimizing the model to map natural language user intent to executable CodeQL scripts.
+# 6 Proposed Solution: Multi-Stage Structural Retrieval
 
-## 6.2 Hybrid Entry & Traversal Strategy
-To ensure both high recall (finding the right code) and high precision (tracing the right dependencies), we utilize a two-step retrieval process:
+We propose a "Coarse-to-Fine" retrieval pipeline. Instead of relying on a single retrieval method, the system employs a three-stage process: **Structural Candidate Generation**, **Semantic Filtering**, and **Deterministic Context Expansion**.
 
-1.  **Step 1: Semantic Entry (Vector Search).**
-    The LLM analyzes the user's natural language request (e.g., "Where is the login logic?") and performs a lightweight vector search to identify the *entry node* (e.g., a function named `AuthUser` or `LoginHandler`). This solves the "Naming Problem" where CodeQL fails if it doesn't know the exact function name.
+## 6.1 Step 1: Structural Candidate Generation (ast-grep)
+The first phase aims to identify potential entry points in the codebase quickly.
+*   **Mechanism:** Instead of simple text search, the LLM generates **permissive ast-grep patterns**. These patterns are designed to be "fuzzy" regarding specific naming but strict regarding structure.
+*   **Example:** If a user asks about "handling retry logic," the LLM might generate a pattern like `try { $$$ } catch ($$$) { $$$ retry $$$ }`.
+*   **Advantage:** This leverages `ast-grep`'s speed to scan millions of lines of code in milliseconds, returning a high-recall list of candidate snippets that structurally match the intent, filtering out irrelevant text matches (like comments containing the word "retry").
 
-2.  **Step 2: Structural Expansion (CodeQL).**
-    Once the entry node is identified, the LLM generates a CodeQL query to traverse the graph from that point.
-    *   *Example:* "Find all functions that call `AuthUser` defined in file `auth.ts`."
-    *   This allows the system to "hop" across files and trace the full execution path deterministically, filling the context with logically connected code rather than random text chunks.
+## 6.1 Step 2: Semantic Relevance Filtering (Cross-Encoder)
+The `ast-grep` step may yield a large number of results (e.g., 200 matches), many of which may be syntactically similar but semantically irrelevant.
+*   **Mechanism:** The raw candidates are passed through a **Cross-Encoder Re-Ranker**. This model takes the user's original natural language query and the code snippet as a pair, outputting a relevance score.
+*   **Outcome:** The system filters the results down to the top-$k$ (e.g., top 5) "Anchor Nodes." These represent the most likely locations of the logic the user is interested in. This step bridges the gap between *syntactic structure* and *user intent*.
 
-## 6.3 Fine-Grained Filtering (Re-Ranker)
-While CodeQL provides high recall for structural dependencies, it may return a large number of results (e.g., 500 usage instances). To prevent context flooding:
-*   A lightweight **Cross-Encoder Re-Ranker** model scores the CodeQL results against the user's original query.
-*   Only the top-k (e.g., top 10) most semantically relevant snippets are loaded into the LLM's context window for the final answer.
+## 6.1 Step 3: Deterministic Context Expansion (CodeQL)
+Once the "Anchor Nodes" are identified, the system must understand their context within the larger system (references, definitions, and data flow).
+*   **Mechanism:** The LLM analyzes the top-$k$ Anchor Nodes and generates a targeted **CodeQL query**.
+*   **Action:** The CodeQL engine executes a graph traversal starting from these anchor nodes.
+    *   *Definition Lookup:* "Where is the class of this object defined?"
+    *   *Reference Tracing:* "Who calls this function?"
+    *   *Data Flow:* "Where does the variable passed into this function originate?"
+*   **Result:** This step deterministically retrieves the connected subgraph of code. Unlike RAG, which might retrieve disconnected chunks, this ensures the final context provided to the user contains the complete, executable logic path.
+
+## 6.2 Tool-Use Alignment Strategy
+To bridge the gap between natural language intent and rigid code analysis syntax, we employ a dual-pronged strategy to "equip" the LLM with proficiency in `ast-grep` and CodeQL.
+
+### Post-Training Strategy
+To enable this pipeline, the LLM undergoes a specialized post-training regimen:
+1.  **Tool-Use SFT (Supervised Fine-Tuning):** The model is fine-tuned on a corpus of structural search patterns. It learns to map natural language queries (e.g., "Find user authentication logic") to:
+    *   Permissive **ast-grep** patterns for broad gathering.
+    *   Precise **CodeQL** queries for deep traversal.
+2.  **Reinforcement Learning:** Optimization rewards are given when the generated queries successfully retrieve executable code paths that answer the user's prompt.
+
+### Run-time Prompting
+
+**1. Unified Documentation:**
+We have developed a specialized documentation for both `ast-grep` and CodeQL. During run-time, this file is fed into the LLM's system context, providing it with an immediate, hallucination-free reference for API signatures, standard predicates, and configuration syntax.
+
+**2. System Prompting:**
+> 1.  **Decompose:** Break the natural language query into logical requirements.
+> 2.  **Consult:** Refer to the provided documentation.  
+> 3.  **Construct:** Build atomic sub-rules for each requirement and combine them into a valid query.
+> 4.  **Refine:** If the rule is too specific, remove non-essential constraints to improve recall.
+
 
 # 7 Verification
 
-This section validates how the proposed solution architecture specifically addresses the Needs defined in Section 3.
-
 ## 7.1 Addressing Need 3.1: Token-Efficient Context Management
-The solution achieves **Token-Efficient Querying**. By utilizing the CodeQL database to perform the heavy lifting of filtering and traversal, we avoid loading massive AST maps or irrelevant file chunks into the LLM's context window. The LLM only receives the final, highly relevant subgraph of code. This ensures that the context window usage remains low and focused, regardless of whether the repository is 10,000 or 1 million lines.
+The solution achieves **Token-Efficient Querying** by restricting the LLM's role to "Query Generation" rather than "Content Scanning." The retrieval process requires only two targeted LLM invocations:
+1.  **Invocation 1:** Generating the `ast-grep` pattern to identify potential anchors.
+2.  **Invocation 2:** Generating the `CodeQL` script to expand context from those anchors.
+**Result:** The massive overhead of scanning and traversing the code is offloaded to the external tools (`ast-grep` and CodeQL engine), ensuring the context window is never flooded with raw code regardless of repository size.
 
-## 7.2 Addressing Need 3.2: Semantic & Structural Understanding
-The **Hybrid Entry & Traversal Strategy** (Section 6.2) explicitly satisfies this need. While standard embeddings find the general area of interest (Semantic Entry), the CodeQL engine ensures structural integrity by tracing the actual call graph (Structural Expansion). This proves that the system comprehends the semantic relationship (e.g., "Class A inherits from Class B") rather than just keyword similarity.
+## 7.2 Addressing Need 3.2: Semantic and Structural Understanding
+The solution satisfies this need by exclusively employing **Structure-Aware Tools** for retrieval. Unlike vector embeddings, both `ast-grep` and CodeQL natively understand the Abstract Syntax Tree (AST). `ast-grep` filters results based on precise syntactic patterns (e.g., class definitions), while CodeQL traverses the semantic graph (e.g., variable data flow).
+**Result:** The system fundamentally comprehends the code's architecture, ensuring retrieved snippets are logically connected rather than just textually similar.
 
 ## 7.3 Addressing Need 3.3: Reduced Hallucination via Determinism
-Hallucination is mitigated by replacing probabilistic generation with deterministic retrieval for code relationships. When the system claims "Function A calls Function B," it is not predicting the next token based on probability; it is reporting a fact derived from the relational database. This grounding in the CodeQL schema neutralizes the "Lost-in-the-Middle" effect by presenting the LLM with verified facts rather than noise.
+Hallucination is mitigated by replacing probabilistic generation with **Deterministic Retrieval** for code relationships. When the system asserts a dependency (e.g., "Function A calls Function B"), it is reporting a verifiable fact derived from the CodeQL relational database, not predicting the next token.
+**Result:** This grounding prevents the model from inventing non-existent imports or function calls, effectively neutralizing the "Lost-in-the-Middle" effect by presenting the LLM with verified facts.
+
 
 # References
 
@@ -102,4 +134,8 @@ Hallucination is mitigated by replacing probabilistic generation with determinis
 
 [2] B. Veseli, J. Chibane, M. Toneva, and A. Koller, “Positional biases shift as inputs approach context window limits,” *arXiv preprint arXiv:2508.07479*, 2025.
 
-[3] N. Paulsen, “Context is what you need: The maximum effective context window for real world limits of llms,” *arXiv preprint arXiv:2509.21361*, 2025.
+[3] N. Paulsen, “Context is what you need: The maximum effective context window for real world limits of llms,” *arXiv preprint arXiv:2509.21361*, 2025.  
+
+[4] ast-grep, “Prompting,” ast-grep documentation, 2025. [Online]. Available: https://ast-grep.github.io/advanced/prompting.html.
+
+[5] GitHub, “CodeQL documentation,” GitHub, 2025. [Online]. Available: https://codeql.github.com/.
