@@ -1,396 +1,427 @@
 ---
-# try also 'default' to start simple
 theme: seriph
-# random image from a curated Unsplash collection by Anthony
-# like them? see https://unsplash.com/collections/94734566/slidev
 background: https://cover.sli.dev
-# some information about your slides (markdown enabled)
-title: Hybrid CodeQL-Augmented LLM for Large-Scale Code Comprehension
+title: Semantic Code Search
 info: |
-  ## Hybrid Retrieval System for Large-Scale Code Comprehension
-  Leveraging CodeQL's structural querying with semantic understanding
-class: text-center
-# https://sli.dev/features/drawing
-drawings:
-  persist: false
-# slide transition: https://sli.dev/guide/animations.html#slide-transitions
+  ## Structural Code Analysis Pitch
+  Presentation for funding/stakeholders.
 transition: slide-left
-# enable MDC Syntax: https://sli.dev/features/mdc
 mdc: true
-# duration of the presentation
-duration: 35min
 ---
 
-# Hybrid CodeQL-Augmented LLM for Large-Scale Code Comprehension
+# Beyond Context Windows
+## Solving "Context Loss" in Large-Scale Code Repositories
 
-Making LLMs understand complex, large-scale codebases
+<div class="pt-12">
+  <span @click="$slidev.nav.next" class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
+    Press Space to start <carbon:arrow-right class="inline"/>
+  </span>
+</div>
 
-<div @click="$slidev.nav.next" class="mt-12 py-1" hover:bg="white op-10">
-  Press Space for next page <carbon:arrow-right />
+---
+layout: center
+class: text-center
+---
+
+# The Reality of AI Coding
+
+> "Why does my Copilot fail when I ask about a bug buried deep in a million-line repo?"
+
+<div class="mt-8 text-gray-500">
+The promise of Infinite Context vs. The Reality of Retrieval
 </div>
 
 ---
 
-# Large Codebase Problem  
+# The Problem: Context Loss
 
-> "If code is poetry, then large codebases are epic novels — and our tools often only read the first and last pages."
+Large Language Models (LLMs) suffer from the **"Lost-in-the-Middle"** effect.
 
-Can we help LLMs truly understand the full story of complex code?
+<div class="grid grid-cols-2 gap-4 mt-8">
 
----
+<div>
 
-# Problem: Context Window Limitations
+*   **Context Window Limit:** Even "large" windows cannot fit massive repositories.
+*   **Degradation:** Performance drops significantly when data is in the middle of the prompt \[1\].
+*   **Illusion:** Advertised context size $\neq$ Effective context size \[3\].
 
-Modern codebases (1M+ lines) exceed LLM context windows
-
-<v-clicks>
-
-- **"Lost-in-the-middle" effect**: Performance degrades mid-context
-- **Maximum Effective Context Window (MECW)**: Much smaller than advertised
-- **Hallucinations**: LLMs create incorrect references when key code is inaccessible
-
-</v-clicks>
-
-<!--add visualization(token/codespace size)-->
-
----
-
-# Current Methods: Text Embedding
-
-<v-click>
-
-Convert code to vector embeddings based on textual similarity
-
-</v-click>
-
-<v-click>
-
-**LIMITATION**: Can't distinguish function *definition* vs *call*
-
-</v-click>
-
-<v-click>
-
-**RESULT**: Retrieves code that "looks" relevant but is logically disconnected
-
-</v-click>
-
-<v-click>
-
-*Visualization needed: diagram showing wrong code retrieval*
-
-</v-click>
-
----
-
-# Current Methods: AST Map
-
-<v-click>
-
-Parse code into tree structures to represent syntax hierarchy
-
-</v-click>
-
-<v-click>
-
-**LIMITATION**: AST representation is extremely verbose
-
-</v-click>
-
-<v-click>
-
-**RESULT**: 1M lines → AST exceeds available context windows
-
-</v-click>
-
-<v-click>
-
-*Visualization needed: huge tree diagram vs small context window*
-
-</v-click>
-
----
-
-# Current Methods: RAG
-
-<v-click>
-
-Chunks codebase, retrieves top-k chunks based on user query
-
-</v-click>
-
-<v-click>
-
-**LIMITATION**: "Context Fragmentation" - splits functions/classes arbitrarily
-
-</v-click>
-
-<v-click>
-
-**RESULT**: Can't trace call stacks across multiple files (Multi-Hop problem)
-
-</v-click>
-
-<v-click>
-
-*Visualization needed: broken code fragments vs complete execution path*
-
-</v-click>
-
----
-
-# Need for a New Approach
-
-<v-clicks>
-
-- **Token-Efficient Context Management**:  
-Handle codebases of arbitrary size without saturating LLM context
-- **Semantic and Structural Understanding**:  
-Perform searches that respect structural integrity of code  
-- **Reduced Hallucination via Determinism**:   
-Minimize incorrect code references with deterministic database lookups
-
-</v-clicks>
-
----
-
-# Boundary Conditions
-
-<v-clicks>
-
-- **Codebase Size**:  
-10,000 - 1,000,000 lines of code
-- **Task Complexity**:  
-Simple lookups ✅ Complex dependency tracing ✅
-- **Response Time**:  
-Under 10 minutes for developer experience
-
-</v-clicks>
-
----
-
-# Solution: Combine natural language search with CodeQL's structural precision
-<v-click>
-Introducing: Hybrid Retrieval System  
-= Text Dmbedding Flexibility + CodeQL Structural Rigidity  
-
-</v-click>
-
----
-
-# What is CodeQL?
-
-<v-click>
-
-Treats code as data in a relational database
-
-</v-click>
-
-<v-click>
-
-- **Developed by GitHub**  
-- **Syntactic structures**: Functions, loops, variables as database tables
-- **Semantic relationships**: Data flow, control flow, inheritance
-
-</v-click>
-
-<v-click>
-
-Enables high-precision queries impossible with vector search
-
-</v-click>
-
-</v-click>
-
----
-
-# Post-Training Strategy
-
-<v-click>
-
-## Training the LLM to Understand CodeQL:
-
-</v-click>
-
-<v-clicks>
-
-1. **Supervised Fine-Tuning (SFT)**: Train on CodeQL query corpus to learn QL language
-2. **Reinforcement Learning (RL)**: Optimize natural language to executable CodeQL mapping
-
-</v-clicks>
-
----
-
-# Hybrid Solution Architecture
-
-<v-click>
-
-## Two-Step Retrieval Process:
-
-</v-click>
-
-<v-clicks>
-
-1. **Semantic Entry (Vector Search)**: Find the entry node using natural language
-2. **Structural Expansion (CodeQL)**: Trace execution path deterministically
-
-</v-clicks>
-
----
-
-# Step 1: Semantic Entry
-
-<v-click>
-
-LLM analyzes natural language request: "Where is the login logic?"
-
-</v-click>
-
-<v-click>
-
-Vector search identifies the entry node: `AuthUser` or `LoginHandler`
-
-</v-click>
-
-<!--transform to illustration-->
-
-<v-click>
-
-**Solves**: The "Naming Problem" where CodeQL needs exact names
-
-</v-click>
-
----
-
-# Step 2: Structural Expansion
-
-<v-click>
-
-LLM generates CodeQL query from entry point
-
-</v-click>
-
-<v-click>
-
-**Example**: "Find all functions that call `AuthUser` defined in file `auth.ts`"
-
-</v-click>
-
-<!--transform to illustration-->
-
-<v-click>
-
-**Result**: Traces full execution path across files deterministically
-
-</v-click>
-
----
-
-# Fine-Grained Filtering
-
-<v-click>
-
-CodeQL may return many results (500+ usage instances)
-
-</v-click>
-
-<v-click>
-
-**Cross-Encoder Re-Ranker** scores results against original query
-
-</v-click>
-
-<v-click>
-
-Only top-k most relevant snippets enter LLM context
-
-</v-click>
-
-<!--transform to illustration-->
----
-
-# Verification: Token-Efficient Context Management
-
-<v-click>
-
-**Challenge**: How to handle arbitrary codebase size without saturating context?
-
-</v-click>
-
-<v-click>
-
-**Solution**: CodeQL database does heavy lifting, LLM gets only relevant subgraph
-
-</v-click>
-
-<v-click>
-
-**Result**: Context usage remains low regardless of codebase size
-
-</v-click>
-
----
-
-# Verification: Semantic & Structural Understanding
-
-<v-click>
-
-**Challenge**: How to respect structural integrity of code?
-
-</v-click>
-
-<v-click>
-
-**Solution**: Hybrid Entry & Traversal Strategy
-
-</v-click>
-
-<v-click>
-
-Vector search → structural entry, CodeQL → structural expansion
-
-</v-click>
-
----
-
-# Verification: Reduced Hallucination via Determinism
-
-<v-click>
-
-**Challenge**: How to minimize incorrect code references?
-
-</v-click>
-
-<v-click>
-
-**Solution**: Replace probabilistic generation with deterministic retrieval
-
-</v-click>
-
-<v-click>
-
-CodeQL facts rather than LLM probabilities
-
-</v-click>
-
----
-
-# Call to Action
-
-The future of code comprehension lies in combining:
-<div class="grid grid-cols-2 gap-10 pt-10">
-  <div>
-    <div class="text-2xl mb-4">Natural Understanding</div>
-    <div> List possibilities</div>
-  </div>
-  <div>
-    <div class="text-2xl mb-4">Structural Precision</div>
-    <div> Accurate, deterministic results</div>
-  </div>
 </div>
 
-**The Hybrid CodeQL-Augmented LLM is the bridge between them.**
+<div class="flex items-center justify-center h-full bg-gray-100 rounded-lg dark:bg-gray-800">
+<!-- VISUALIZATION DESCRIPTION:
+A line graph showing "Model Accuracy" on the Y-axis and "Token Position" on the X-axis.
+The line starts high (Primacy Bias), dips significantly in the middle (Lost-in-the-Middle), and rises at the end (Recency Bias).
+-->
+<div class="text-center opacity-50">
+  (Visualization: The U-Shaped Performance Curve)
+</div>
+</div>
 
-<div @click="$slidev.nav.next" class="mt-12 py-1" hover:bg="white op-10">
-  Thank you! Questions? <carbon:arrow-right />
+</div>
+
+---
+transition: fade-out
+layout: section
+---
+
+# Why Current Methods Fail
+
+Three dominant approaches, three critical flaws.
+
+---
+layout: two-cols
+---
+
+# Text Embeddings
+
+Treating code like natural language.
+
+<v-click>
+
+### The Flaw: "Lexical" vs "Functional"
+*   Embeddings capture text similarity, not logic.
+*   Cannot distinguish a *function definition* from a *function call*.
+*   **Result:** Retrieves irrelevant code that "looks" similar.
+
+</v-click>
+
+::right::
+
+<div class="flex items-center justify-center h-full ml-4 bg-gray-100 rounded-lg dark:bg-gray-800">
+<!-- VISUALIZATION DESCRIPTION:
+A Venn diagram showing "Lexical Similarity" and "Functional Dependency" with very little overlap.
+An arrow points to the non-overlapping area labeled "Embedding Search Results".
+-->
+<div class="text-center opacity-50">
+  (Visualization: Logic Mismatch)
+</div>
+</div>
+
+---
+layout: two-cols
+---
+
+# AST Maps
+
+Feeding the raw syntax tree to the LLM.
+
+<v-click>
+
+### The Flaw: Verbosity
+*   ASTs are massive (often 10x code size).
+*   A 1M line codebase = Billions of tokens.
+*   **Result:** Instantly overflows the context window.
+
+</v-click>
+
+::right::
+
+<div class="flex items-center justify-center h-full ml-4 bg-gray-100 rounded-lg dark:bg-gray-800">
+<!-- VISUALIZATION DESCRIPTION:
+A small box labeled "Source Code" next to a massive, towering box labeled "AST Representation".
+A small container labeled "Context Window" is shown, unable to fit even a fraction of the AST box.
+-->
+<div class="text-center opacity-50">
+  (Visualization: Data Explosion)
+</div>
+</div>
+
+---
+layout: two-cols
+---
+
+# Retrieval Augmented Generation
+
+Chopping code into chunks (e.g., 500 tokens).
+
+<v-click>
+
+### The Flaw: Context Fragmentation
+*   Splits functions and classes arbitrarily.
+*   Severs the "Call Stack."
+*   **Result:** The LLM sees pieces of the puzzle but cannot see how they fit together.
+
+</v-click>
+
+::right::
+
+<div class="flex items-center justify-center h-full ml-4 bg-gray-100 rounded-lg dark:bg-gray-800">
+<!-- VISUALIZATION DESCRIPTION:
+A flowchart showing a function "Parent()" calling "Child()".
+A dashed line (The RAG Chunk Limit) cuts right through the arrow connecting them.
+The LLM is shown looking at "Parent()" with a confused expression, as the link to "Child()" is broken.
+-->
+<div class="text-center opacity-50">
+  (Visualization: The Severed Link)
+</div>
+</div>
+
+---
+layout: center
+class: text-center
+---
+
+# What We Need
+
+To solve this, we need a paradigm shift.
+
+<div class="grid grid-cols-3 gap-4 mt-10 text-left">
+    <div class="p-4 border border-gray-200 rounded">
+        <carbon:meter class="text-3xl text-blue-500 mb-2"/>
+        <h3 class="font-bold">Token Efficiency</h3>
+        <p class="text-sm">Decouple retrieval cost from repo size.</p>
+    </div>
+    <div class="p-4 border border-gray-200 rounded">
+        <carbon:ibm-watson-knowledge-studio class="text-3xl text-green-500 mb-2"/>
+        <h3 class="font-bold">Structural Awareness</h3>
+        <p class="text-sm">Understand call graphs, not just text matches.</p>
+    </div>
+    <div class="p-4 border border-gray-200 rounded">
+        <carbon:chemistry class="text-3xl text-purple-500 mb-2"/>
+        <h3 class="font-bold">Determinism</h3>
+        <p class="text-sm">Zero hallucinations on dependencies.</p>
+    </div>
+</div>
+
+---
+
+# Boundary Conditions & Scalability
+
+We are building for the real world, not just a demo.
+
+<br>
+
+*   **Target Scale:** 10,000 $\rightarrow$ 1,000,000+ Lines of Code.
+*   **Latency:** < 10 minutes for deep dependency resolution.
+*   **Complexity:** Multi-file, multi-hop dependency tracing.
+
+<!-- VISUALIZATION DESCRIPTION:
+A gauge chart showing the needle moving from "Small Script" past "Library" into "Enterprise Monorepo" (red zone).
+Our solution targets the "Enterprise Monorepo" zone.
+-->
+<div class="h-40 mt-4 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
+  <span class="opacity-50">(Visualization: Scalability Gauge)</span>
+</div>
+
+---
+transition: slide-up
+layout: section
+---
+
+# The Solution
+**Structural Candidate Generation** $\to$ **Semantic Filtering**  $\to$  **Deterministic Context Expansion**
+
+---
+
+# The Technical Core
+
+We leverage two industrial-grade engines to treat code as **Data**, not Text.
+
+<div class="grid grid-cols-2 gap-12 mt-10">
+
+<div class="text-center">
+  <h2 class="text-green-600">ast-grep</h2>
+  <p class="italic">"Structural Regex"</p>
+  <ul class="text-left mt-4 text-sm">
+    <li>Pattern matching on AST nodes.</li>
+    <li>Insane speed (Milliseconds).</li>
+    <li>Filters noise (comments vs code).</li>
+  </ul>
+</div>
+
+<div class="text-center">
+  <h2 class="text-blue-600">GitHub CodeQL</h2>
+  <p class="italic">"Relational Database"</p>
+  <ul class="text-left mt-4 text-sm">
+    <li>Treats code as a database.</li>
+    <li>Deep analysis (Taint tracking, Data flow).</li>
+    <li>Connects logic across files.</li>
+  </ul>
+</div>
+
+</div>
+
+---
+
+# The Pipeline: Step 1
+## Structural Candidate Generation(**First LLM Call**)
+
+
+*   **Mechanism:** LLM generates *permissive* `ast-grep` patterns.
+*   **Input:** "Find retry logic."
+*   **Pattern:** `try { $$$ } catch ($$$) { $$$ retry $$$ }`
+
+<!-- VISUALIZATION DESCRIPTION:
+An animation of a funnel.
+Top of funnel: "1 Million Lines of Code".
+Action: A filter labeled "ast-grep" slides across.
+Output: "200 Candidate Snippets".
+-->
+<div class="h-40 mt-8 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
+  <span class="opacity-50">(Visualization: The Funnel - Phase 1)</span>
+</div>
+
+---
+
+# The Pipeline: Step 2
+## Semantic Relevance Filtering
+
+*   **Mechanism:** Cross-Encoder Re-Ranker.
+*   **Action:** Compare User Query $\leftrightarrow$ Candidate Snippets.
+*   **Output:** Top-k most relevant one.
+*   **Significance:** Bridges the gap between *Syntactic Structure* and *User Intent*.
+
+<!-- VISUALIZATION DESCRIPTION:
+A magnifying glass focusing on the "200 Candidates".
+The glass highlights 5 specific blocks in bright green ("Anchors") and fades the rest to grey.
+-->
+<div class="h-40 mt-8 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
+  <span class="opacity-50">(Visualization: Filtering Noise)</span>
+</div>
+
+---
+
+# The Pipeline: Step 3
+## Deterministic Context Expansion(**Second LLM call**)
+
+
+*   **Mechanism:** LLM generates a **CodeQL** query based on ast-grep results(anchor).
+*   **Result:** A connected subgraph of executable logic. 
+
+
+```mermaid
+graph LR
+    subgraph File_1 [File 1: The Entry Point]
+        A[("🔍 The Code We Found<br/>(Anchor)")]
+    end
+
+    subgraph File_2 [File 2: The Logic]
+        B["⚙️ Processing"]
+    end
+
+    subgraph File_3 [File 3: The Result]
+        C[("💎 The Hidden Data<br/>(What RAG misses)")]
+    end
+
+    A -->|Calls| B
+    B -->|Calls| C
+    
+    style A fill:#d1e7dd,stroke:#0f5132,stroke-width:2px
+    style C fill:#cfe2ff,stroke:#084298,stroke-width:2px
+```
+---
+
+# Enabling the Model
+
+How do we teach an LLM to use these complex tools?
+
+---
+
+# Post-Training
+
+How we turn a standard LLM into a Structural Analysis Expert.
+
+<div class="grid grid-cols-2 gap-8 mt-8">
+
+<div v-click>
+  <div class="flex items-center mb-2">
+    <carbon:education class="text-3xl text-blue-500 mr-2" />
+    <h3 class="text-xl font-bold">1. Tool-Use SFT</h3>
+  </div>
+  <div class="opacity-80 text-sm">
+    <b>Supervised Fine-Tuning</b>
+  </div>
+  <p class="mt-4 text-sm leading-relaxed">
+    The "Classroom" phase. We teach the model the <i>language</i> of the tools.
+  </p>
+  <ul class="mt-2 text-sm list-disc pl-4 space-y-2">
+    <li><b>Input:</b> "Find user authentication logic"</li>
+    <li><b>Target:</b> Valid <code>ast-grep</code> patterns & <code>CodeQL</code> syntax.</li>
+    <li><b>Goal:</b> Fluency in tool usage.</li>
+  </ul>
+</div>
+
+<div v-click>
+  <div class="flex items-center mb-2">
+    <carbon:trophy class="text-3xl text-yellow-500 mr-2" />
+    <h3 class="text-xl font-bold">2. Reinforcement Learning</h3>
+  </div>
+  <div class="opacity-80 text-sm">
+    <b>Reward-Based Optimization</b>
+  </div>
+  <p class="mt-4 text-sm leading-relaxed">
+    The "Practice" phase. We optimize for <i>results</i>.
+  </p>
+  <ul class="mt-2 text-sm list-disc pl-4 space-y-2">
+    <li><b>Reward (+1):</b> If the query returns a verifiable, executable code path.</li>
+    <li><b>Penalty (-1):</b> If the query is syntactically correct but returns nothing.</li>
+  </ul>
+</div>
+
+</div>
+
+---
+layout: two-cols
+---
+
+# Run-time Context
+* Provide unified documentation for `ast-grep` and `CodeQL`.  
+* Inject system prompt:  
+
+
+
+::right::
+
+<div class="p-4 mt-10 ml-4 border border-gray-500 rounded bg-gray-900 text-white text-xs font-mono" v-click>
+System: You are a Structural Analysis Agent.
+
+Context:
+- ast-grep API v1.2
+- CodeQL Standard Library
+
+Task:
+1. Decompose user query.
+2. Consult docs.
+3. Construct deterministic query.
+</div>
+
+---
+
+# Verification: Why This Wins
+
+<div class="grid grid-cols-3 gap-4 mt-8">
+
+<div v-click>
+<h3 class="text-blue-500">Token Efficiency</h3>
+<p class="text-sm">We don't scan code. We generate queries.</p>
+<p class="text-xs text-gray-500 mt-2">LLM only sees the final result, not the whole repo.</p>
+</div>
+
+<div v-click>
+<h3 class="text-green-500">Structure Aware</h3>
+<p class="text-sm">We respect the AST.</p>
+<p class="text-xs text-gray-500 mt-2">No broken functions. No missing imports.</p>
+</div>
+
+<div v-click>
+<h3 class="text-purple-500">Zero Hallucination</h3>
+<p class="text-sm">Deterministic Retrieval.</p>
+<p class="text-xs text-gray-500 mt-2">Dependencies are proven by CodeQL database, not predicted.</p>
+</div>
+
+</div>
+
+---
+layout: center
+class: text-center
+---
+
+# Conclusion
+
+We are moving from **Probabilistic Guessing** to **Deterministic Analysis**.
+
+By combining the creativity of LLMs with the rigidity of AST tools, we solve the Context Window limitation permanently.
+
+<div class="mt-12">
+  <h2 class="text-xl font-bold">Please Invest in Semantic Certainty.</h2>
 </div>
