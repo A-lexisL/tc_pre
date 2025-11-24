@@ -309,18 +309,111 @@ graph LR
     style A fill:#d1e7dd,stroke:#0f5132,stroke-width:2px
     style C fill:#cfe2ff,stroke:#084298,stroke-width:2px
 ```
+
+
+---
+
+# The Gap: Limited Knowledge of CodeQL & ast-grep.
+
+<img src="./limits.png" class="h-80 mx-auto" />
+
+---
+layout: center
+class: text-center
 ---
 
 # Enabling the Model
 
-How do we teach an LLM to use these complex tools?
+How we bridge the gap between general intelligence and specific tool mastery.
+```mermaid
+graph LR
+    classDef raw fill:#f3f4f6,stroke:#9ca3af,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef blackbox fill:#000,stroke:#333,stroke-width:0px,color:#fff;
+    classDef expert fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
+    classDef input fill:#e0e7ff,stroke:#4f46e5,stroke-width:2px;
+
+    %% Method 1: Post-Training
+    Base(Raw Base Model):::raw --> Train[Post-Training]:::blackbox
+    Train --> Model(Fine-Tuned<br/>Expert):::expert
+
+    %% Method 2: Run-Time Prompting
+    Prompt(Context &<br/>Prompting):::input --> Run[Run-Time<br/>Inference]:::blackbox
+    Model --> Run
+    Run --> Result(Final Tool<br/>Execution):::expert
+    
+    linkStyle default stroke-width:2px,fill:none;
+```
 
 ---
 
-# Post-Training
+# Tool-Use Supervised Fine-Tuning
 
-How we turn a standard LLM into a Structural Analysis Expert.
+<div class="h-[85%] grid place-content-center">
 
+```mermaid {scale: 0.9}
+graph LR
+    classDef raw fill:#f3f4f6,stroke:#9ca3af,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef blackbox fill:#000,stroke:#333,stroke-width:0px,color:#fff;
+    classDef expert fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
+    classDef data fill:#e0e7ff,stroke:#4f46e5,stroke-width:2px;
+
+    Base(Base LLM):::raw
+    
+    subgraph Training_Data
+        direction TB
+        NL["Quest: 'Find Auth Logic'"]:::data
+        Target["Answer: ast-grep / CodeQL"]:::data
+        NL <-.-> Target
+    end
+
+    SFT[Supervised<br/>Fine-Tuning]:::blackbox
+    Agent(Tool-Use<br/>Expert):::expert
+
+    Base --> SFT
+    Training_Data --> SFT
+    SFT --> Agent
+
+    linkStyle default stroke-width:2px,fill:none;
+```
+</div>
+
+---
+
+# Reinforcement Learning
+
+<div class="h-[85%] grid place-content-center">
+
+```mermaid {scale: 0.9}
+graph LR
+    classDef raw fill:#f3f4f6,stroke:#9ca3af,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef blackbox fill:#000,stroke:#333,stroke-width:0px,color:#fff;
+    classDef expert fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
+    classDef action fill:#fff7ed,stroke:#ea580c,stroke-width:2px;
+
+    Model(LLM):::raw
+    
+    subgraph Interaction
+        Gen[Gen: ast-grep/CodeQL]:::action
+        Env{Execution?}:::blackbox
+    end
+
+    Reward((Reward)):::expert
+    Penalty((Penalty)):::expert
+
+    Model --> Gen
+    Gen --> Env
+    
+    Env -- "Success" --> Reward
+    Env -- "Fail" --> Penalty
+    
+    Reward -.->|Update Weights| Model
+    Penalty -.->|Optimization| Model
+
+    linkStyle default stroke-width:2px,fill:none;
+```
+</div>
+
+<!--
 <div class="grid grid-cols-2 gap-8 mt-8">
 
 <div v-click>
@@ -359,6 +452,7 @@ How we turn a standard LLM into a Structural Analysis Expert.
 </div>
 
 </div>
+-->
 
 ---
 layout: two-cols
@@ -375,14 +469,14 @@ layout: two-cols
 <div class="p-4 mt-10 ml-4 border border-gray-500 rounded bg-gray-900 text-white text-xs font-mono" v-click>
 System: You are a Structural Analysis Agent.
 
-Context:
-- ast-grep API v1.2
-- CodeQL Standard Library
+Tool:
+- ast-grep
+- CodeQL
 
 Task:
-1. Decompose user query.
-2. Consult docs.
-3. Construct deterministic query.
+1. Consult docs.
+2. Decompose user query.
+3. Construct into deterministic query.
 </div>
 
 ---
@@ -399,12 +493,12 @@ Task:
 
 <div v-click>
 <h3 class="text-green-500">Structure Aware</h3>
-<p class="text-sm">We respect the AST.</p>
-<p class="text-xs text-gray-500 mt-2">No broken functions. No missing imports.</p>
+<p class="text-sm">We take advantage of the AST.</p>
+<p class="text-xs text-gray-500 mt-2">We see calling stack and function chain.</p>
 </div>
 
 <div v-click>
-<h3 class="text-purple-500">Zero Hallucination</h3>
+<h3 class="text-purple-500">Little Hallucination</h3>
 <p class="text-sm">Deterministic Retrieval.</p>
 <p class="text-xs text-gray-500 mt-2">Dependencies are proven by CodeQL database, not predicted.</p>
 </div>
