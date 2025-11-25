@@ -512,10 +512,17 @@ class: text-center
 
 # Conclusion
 
-We are moving from **Probabilistic Guessing** to **Deterministic Analysis**.
+Shifting the heavy lifting of search from the LLM to ast-grep/CodeQL
 
-By combining the creativity of LLMs with the rigidity of AST tools, we solve the Context Window limitation permanently.
+```mermaid
+graph LR
+A["context waste 
+and semantic guessing"]
+B["token efficiency
+and structural correctness"]
+A-->B
+```
 
 <div class="mt-12">
-  <h2 class="text-xl font-bold">Please Invest in Semantic Certainty.</h2>
+  <h2 class="text-xl font-bold">Please Invest in AST-enhanced LLM system.</h2>
 </div>
