@@ -14,7 +14,6 @@ mdc: true
 
 <div class="pt-12">
   <span @click="$slidev.nav.next" class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
-    Press Space to start <carbon:arrow-right class="inline"/>
   </span>
 </div>
 
@@ -41,20 +40,14 @@ Large Language Models (LLMs) suffer from the **"Lost-in-the-Middle"** effect.
 
 <div>
 
-*   **Context Window Limit:** Even "large" windows cannot fit massive repositories.
-*   **Degradation:** Performance drops significantly when data is in the middle of the prompt \[1\].
-*   **Illusion:** Advertised context size $\neq$ Effective context size \[3\].
+* **Context Window Limit:** Even "large" windows cannot fit massive repositories.
+* **Degradation:** Performance drops significantly when data is in the middle of the prompt \[1\].
+* **Illusion:** Advertised context size $\neq$ Effective context size \[3\].
 
 </div>
 
-<div class="flex items-center justify-center h-full bg-gray-100 rounded-lg dark:bg-gray-800">
-<!-- VISUALIZATION DESCRIPTION:
-A line graph showing "Model Accuracy" on the Y-axis and "Token Position" on the X-axis.
-The line starts high (Primacy Bias), dips significantly in the middle (Lost-in-the-Middle), and rises at the end (Recency Bias).
--->
-<div class="text-center opacity-50">
-  (Visualization: The U-Shaped Performance Curve)
-</div>
+<div class="flex items-center justify-center h-full">
+<img src="./image1.png" class="h-60 object-contain mx-auto" alt="U-Shaped Performance Curve">
 </div>
 
 </div>
@@ -79,22 +72,16 @@ Treating code like natural language.
 <v-click>
 
 ### The Flaw: "Lexical" vs "Functional"
-*   Embeddings capture text similarity, not logic.
-*   Cannot distinguish a *function definition* from a *function call*.
-*   **Result:** Retrieves irrelevant code that "looks" similar.
+* Embeddings capture text similarity, not logic.
+* Cannot distinguish a *function definition* from a *function call*.
+* **Result:** Retrieves irrelevant code that "looks" similar.
 
 </v-click>
 
 ::right::
 
-<div class="flex items-center justify-center h-full ml-4 bg-gray-100 rounded-lg dark:bg-gray-800">
-<!-- VISUALIZATION DESCRIPTION:
-A Venn diagram showing "Lexical Similarity" and "Functional Dependency" with very little overlap.
-An arrow points to the non-overlapping area labeled "Embedding Search Results".
--->
-<div class="text-center opacity-50">
-  (Visualization: Logic Mismatch)
-</div>
+<div class="flex items-center justify-center h-full ml-4">
+<img src="./mismatch.png" class="h-60 object-contain mx-auto" alt="Logic Mismatch">
 </div>
 
 ---
@@ -108,22 +95,16 @@ Feeding the raw syntax tree to the LLM.
 <v-click>
 
 ### The Flaw: Verbosity
-*   ASTs are massive (often 10x code size).
-*   A 1M line codebase = Billions of tokens.
-*   **Result:** Instantly overflows the context window.
+* ASTs are massive (often 10x code size).
+* A 1M line codebase = Billions of tokens.
+* **Result:** Instantly overflows the context window.
 
 </v-click>
 
 ::right::
 
-<div class="flex items-center justify-center h-full ml-4 bg-gray-100 rounded-lg dark:bg-gray-800">
-<!-- VISUALIZATION DESCRIPTION:
-A small box labeled "Source Code" next to a massive, towering box labeled "AST Representation".
-A small container labeled "Context Window" is shown, unable to fit even a fraction of the AST box.
--->
-<div class="text-center opacity-50">
-  (Visualization: Data Explosion)
-</div>
+<div class="flex items-center justify-center h-full ml-4">
+<img src="./explosion.png" class="h-60 object-contain mx-auto" alt="Data Explosion">
 </div>
 
 ---
@@ -137,24 +118,18 @@ Chopping code into chunks (e.g., 500 tokens).
 <v-click>
 
 ### The Flaw: Context Fragmentation
-*   Splits functions and classes arbitrarily.
-*   Severs the "Call Stack."
-*   **Result:** The LLM sees pieces of the puzzle but cannot see how they fit together.
+* Splits functions and classes arbitrarily.
+* Severs the "Call Stack."
+* **Result:** The LLM sees pieces of the puzzle but cannot see how they fit together.
 
 </v-click>
 
 ::right::
 
-<div class="flex items-center justify-center h-full ml-4 bg-gray-100 rounded-lg dark:bg-gray-800">
-<!-- VISUALIZATION DESCRIPTION:
-A flowchart showing a function "Parent()" calling "Child()".
-A dashed line (The RAG Chunk Limit) cuts right through the arrow connecting them.
-The LLM is shown looking at "Parent()" with a confused expression, as the link to "Child()" is broken.
--->
-<div class="text-center opacity-50">
-  (Visualization: The Severed Link)
+<div class="flex items-center justify-center h-full ml-4">
+<img src="./final.png" class="h-60 object-contain mx-auto" alt="The Severed Link">
 </div>
-</div>
+
 
 ---
 layout: center
@@ -199,9 +174,9 @@ We are building for the real world, not just a demo.
 A gauge chart showing the needle moving from "Small Script" past "Library" into "Enterprise Monorepo" (red zone).
 Our solution targets the "Enterprise Monorepo" zone.
 -->
-<div class="h-40 mt-4 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
+<!-- <div class="h-40 mt-4 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
   <span class="opacity-50">(Visualization: Scalability Gauge)</span>
-</div>
+</div> -->
 
 ---
 transition: slide-up
@@ -257,9 +232,9 @@ Top of funnel: "1 Million Lines of Code".
 Action: A filter labeled "ast-grep" slides across.
 Output: "200 Candidate Snippets".
 -->
-<div class="h-40 mt-8 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
+<!-- <div class="h-40 mt-8 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
   <span class="opacity-50">(Visualization: The Funnel - Phase 1)</span>
-</div>
+</div> -->
 
 ---
 
@@ -275,9 +250,9 @@ Output: "200 Candidate Snippets".
 A magnifying glass focusing on the "200 Candidates".
 The glass highlights 5 specific blocks in bright green ("Anchors") and fades the rest to grey.
 -->
-<div class="h-40 mt-8 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
+<!-- <div class="h-40 mt-8 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
   <span class="opacity-50">(Visualization: Filtering Noise)</span>
-</div>
+</div> -->
 
 ---
 
@@ -315,7 +290,7 @@ graph LR
 
 # The Gap: Limited Knowledge of CodeQL & ast-grep.
 
-<img src="./limits.png" class="h-80 mx-auto" />
+<img src="./limits.png" class="h-100 mx-auto" />
 
 ---
 layout: center
@@ -483,24 +458,24 @@ Task:
 
 # Verification: Why This Wins
 
-<div class="grid grid-cols-3 gap-4 mt-8">
+<div class="grid grid-cols-3 gap-8 mt-12">
 
 <div v-click>
 <h3 class="text-blue-500">Token Efficiency</h3>
-<p class="text-sm">We don't scan code. We generate queries.</p>
-<p class="text-xs text-gray-500 mt-2">LLM only sees the final result, not the whole repo.</p>
+<p class="text-xl">We don't scan code. We generate queries.</p>
+<p class="text-base text-gray-500 mt-2">LLM only sees the final result, not the whole repo.</p>
 </div>
 
 <div v-click>
 <h3 class="text-green-500">Structure Aware</h3>
-<p class="text-sm">We take advantage of the AST.</p>
-<p class="text-xs text-gray-500 mt-2">We see calling stack and function chain.</p>
+<p class="text-xl">We take advantage of the AST.</p>
+<p class="text-base text-gray-500 mt-2">We see calling stack and function chain.</p>
 </div>
 
 <div v-click>
-<h3 class="text-purple-500">Little Hallucination</h3>
-<p class="text-sm">Deterministic Retrieval.</p>
-<p class="text-xs text-gray-500 mt-2">Dependencies are proven by CodeQL database, not predicted.</p>
+<h3 class="text-purple-500">Zero Hallucination</h3>
+<p class="text-xl">Deterministic Retrieval.</p>
+<p class="text-base text-gray-500 mt-2">Dependencies are proven by ast-grep/CodeQL, not predicted.</p>
 </div>
 
 </div>
