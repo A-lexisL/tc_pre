@@ -158,6 +158,8 @@ To solve this, we need a paradigm shift.
     </div>
 </div>
 
+
+
 ---
 
 # Boundary Conditions & Scalability
@@ -166,17 +168,13 @@ We are building for the real world, not just a demo.
 
 <br>
 
-*   **Target Scale:** 10,000 $\rightarrow$ 1,000,000+ Lines of Code.
-*   **Latency:** < 10 minutes for deep dependency resolution.
+*   **Target Scale:** $\leq$ 1,000,000+ Lines of Code.
+*   **Latency:** $\leq$ 10 minutes for deep dependency resolution.
 *   **Complexity:** Multi-file, multi-hop dependency tracing.
 
-<!-- VISUALIZATION DESCRIPTION:
-A gauge chart showing the needle moving from "Small Script" past "Library" into "Enterprise Monorepo" (red zone).
-Our solution targets the "Enterprise Monorepo" zone.
--->
-<!-- <div class="h-40 mt-4 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
-  <span class="opacity-50">(Visualization: Scalability Gauge)</span>
-</div> -->
+<div class="flex items-center justify-center h-full ml-4">
+<img src="./size.png" class="h-60 object-contain mx-auto" alt="The Severed Link">
+</div>
 
 ---
 transition: slide-up
