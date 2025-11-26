@@ -9,7 +9,7 @@ transition: slide-left
 mdc: true
 ---
 
-# Beyond Context Windows
+# CodeGist System
 ## Solving "Context Loss" in Large-Scale Code Repositories
 
 <div class="pt-12">
@@ -165,14 +165,16 @@ To solve this, we need a paradigm shift.
 
 We are building for the real world, not just a demo.
 
-<br>
+<div class="mt-4 mb-4">
+  <ul class="space-y-2">
+    <li><b>Target Scale:</b> < 1,000,000+ Lines of Code.</li>
+    <li><b>Latency:</b> < 10 minutes.</li>
+    <li><b>Complexity:</b> Multi-file tracing.</li>
+  </ul>
+</div>
 
-*   **Target Scale:** $\leq$ 1,000,000+ Lines of Code.
-*   **Latency:** $\leq$ 10 minutes for deep dependency resolution.
-*   **Complexity:** Multi-file, multi-hop dependency tracing.
-
-<div class="flex items-center justify-center h-full ml-4">
-<img src="./size.png" class="h-60 object-contain mx-auto" alt="The Severed Link">
+<div class="flex justify-center mt-2">
+  <img src="./size.png" class="h-60 object-contain" />
 </div>
 
 ---
@@ -214,30 +216,11 @@ We leverage two industrial-grade engines to treat code as **Data**, not Text.
 </div>
 
 ---
-layout:center
+transition: slide-up
+layout: section
 ---
-# CodeGist System
-```mermaid
-graph LR
-    subgraph File_1 [File 1: The Entry Point]
-        A[("🔍 The Code We Found<br/>(Anchor)")]
-    end
 
-    subgraph File_2 [File 2: The Logic]
-        B["⚙️ Processing"]
-    end
-
-    subgraph File_3 [File 3: The Result]
-        C[("💎 The Hidden Data<br/>(What RAG misses)")]
-    end
-
-    A -->|Calls| B
-    B -->|Calls| C
-    
-    style A fill:#d1e7dd,stroke:#0f5132,stroke-width:2px
-    style C fill:#cfe2ff,stroke:#084298,stroke-width:2px
-```
-
+# The CodeGist System
 
 ---
 
@@ -503,5 +486,5 @@ A-->B
 ```
 
 <div class="mt-12">
-  <h2 class="text-xl font-bold">Please Invest in AST-enhanced LLM system.</h2>
+  <h2 class="text-xl font-bold">Please Invest in CodeGist system.</h2>
 </div>
