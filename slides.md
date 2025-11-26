@@ -111,16 +111,15 @@ Feeding the raw syntax tree to the LLM.
 layout: two-cols
 ---
 
-# Retrieval Augmented Generation
-
-Chopping code into chunks (e.g., 500 tokens).
+# Agentic RAG
 
 <v-click>
 
-### The Flaw: Context Fragmentation
-* Splits functions and classes arbitrarily.
-* Severs the "Call Stack."
-* **Result:** The LLM sees pieces of the puzzle but cannot see how they fit together.
+### The Flaw
+* Inefficiency
+  * LLM explores codebase using tools like grep and ls.
+  * Sequential keyword searches check files one by one.
+* Result: Slow, brittle.
 
 </v-click>
 
@@ -215,53 +214,9 @@ We leverage two industrial-grade engines to treat code as **Data**, not Text.
 </div>
 
 ---
-
-# The Pipeline: Step 1
-## Structural Candidate Generation(**First LLM Call**)
-
-
-*   **Mechanism:** LLM generates *permissive* `ast-grep` patterns.
-*   **Input:** "Find retry logic."
-*   **Pattern:** `try { $$$ } catch ($$$) { $$$ retry $$$ }`
-
-<!-- VISUALIZATION DESCRIPTION:
-An animation of a funnel.
-Top of funnel: "1 Million Lines of Code".
-Action: A filter labeled "ast-grep" slides across.
-Output: "200 Candidate Snippets".
--->
-<!-- <div class="h-40 mt-8 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
-  <span class="opacity-50">(Visualization: The Funnel - Phase 1)</span>
-</div> -->
-
+layout:center
 ---
-
-# The Pipeline: Step 2
-## Semantic Relevance Filtering
-
-*   **Mechanism:** Cross-Encoder Re-Ranker.
-*   **Action:** Compare User Query $\leftrightarrow$ Candidate Snippets.
-*   **Output:** Top-k most relevant one.
-*   **Significance:** Bridges the gap between *Syntactic Structure* and *User Intent*.
-
-<!-- VISUALIZATION DESCRIPTION:
-A magnifying glass focusing on the "200 Candidates".
-The glass highlights 5 specific blocks in bright green ("Anchors") and fades the rest to grey.
--->
-<!-- <div class="h-40 mt-8 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
-  <span class="opacity-50">(Visualization: Filtering Noise)</span>
-</div> -->
-
----
-
-# The Pipeline: Step 3
-## Deterministic Context Expansion(**Second LLM call**)
-
-
-*   **Mechanism:** LLM generates a **CodeQL** query based on ast-grep results(anchor).
-*   **Result:** A connected subgraph of executable logic. 
-
-
+# CodeGist System
 ```mermaid
 graph LR
     subgraph File_1 [File 1: The Entry Point]
@@ -283,6 +238,57 @@ graph LR
     style C fill:#cfe2ff,stroke:#084298,stroke-width:2px
 ```
 
+
+---
+
+# The Pipeline: Step 1
+## Structural Candidate Generation(**First LLM Call**)
+
+
+*   **Mechanism:** LLM generates *permissive* `ast-grep` patterns.
+*   **Input:** "Find retry logic."
+*   **Pattern:** `try { $$$ } catch ($$$) { $$$ retry $$$ }`
+
+<!-- VISUALIZATION DESCRIPTION:
+An animation of a funnel.
+Top of funnel: "1 Million Lines of Code".
+Action: A filter labeled "ast-grep" slides across.
+Output: "200 Candidate Snippets".
+-->
+<div class="h-40 mt-8  flex items-center justify-center">
+  <img src="./step1.png">
+</div>
+
+---
+
+# The Pipeline: Step 2
+## Semantic Relevance Filtering
+
+*   **Mechanism:** Cross-Encoder Re-Ranker.
+*   **Action:** Compare User Query $\leftrightarrow$ Candidate Snippets.
+*   **Output:** Top-k most relevant one.
+*   **Significance:** Bridges the gap between *Syntactic Structure* and *User Intent*.
+
+<!-- VISUALIZATION DESCRIPTION:
+A magnifying glass focusing on the "200 Candidates".
+The glass highlights 5 specific blocks in bright green ("Anchors") and fades the rest to grey.
+-->
+<div class="h-40 mt-8 bg-gray-100 rounded-lg dark:bg-gray-800 flex items-center justify-center">
+  <img src="./step2.png">
+</div>
+
+---
+
+# The Pipeline: Step 3
+## Deterministic Context Expansion(**Second LLM call**)
+
+
+*   **Mechanism:** LLM generates a **CodeQL** query based on ast-grep results(anchor).
+*   **Result:** A connected subgraph of executable logic. 
+
+<div class="h-40 mt-8 flex items-center justify-center">
+  <img src="./step3.png">
+</div>
 
 ---
 
